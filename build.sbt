@@ -18,6 +18,8 @@ val `smqd-ext-redis` = project.in(file(".")).settings(
   ),
   resolvers += Resolver.sonatypeRepo("public")
 ).settings(
+  libraryDependencies += "redis.clients" % "jedis" % "2.9.0"
+).settings(
   // Publishing
   publishTo := {
     val nexus = "https://oss.sonatype.org/"
