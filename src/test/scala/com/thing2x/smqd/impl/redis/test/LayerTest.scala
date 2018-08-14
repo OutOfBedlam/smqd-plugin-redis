@@ -14,6 +14,7 @@
 
 package com.thing2x.smqd.impl.redis.test
 
+import com.thing2x.smqd.{ClientId, FilterPath, QoS}
 import com.thing2x.smqd.impl.redis.RedisLayer
 import com.typesafe.scalalogging.StrictLogging
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
@@ -37,8 +38,38 @@ class LayerTest extends WordSpec with BeforeAndAfterAll with Matchers with Stric
 
   "redis layer" must {
 
-    "connect" in {
+    val clientId = ClientId("sub_1", "test_1")
+    val ntime = 10
+    logger.trace(s"clientId = $clientId")
 
+    "subscribes" in {
+      0 until ntime foreach { n =>
+        layer.saveSubscription(clientId, FilterPath(s"sensor/1$n/temp"), QoS.AtMostOnce)
+      }
+
+      val subs = layer.loadSubscriptions(clientId)
+      assert(subs.length == ntime)
+
+      val strs = subs.map(_.filterPath.toString)
+      0 until ntime foreach { n =>
+        assert(strs.contains(s"sensor/1$n/temp"))
+      }
+    }
+
+    "unsubscribes" in {
+      0 until ntime foreach { n =>
+        layer.deleteSubscription(clientId, FilterPath(s"sensor/1$n/temp"))
+      }
+
+      val subs = layer.loadSubscriptions(clientId)
+      assert(subs.isEmpty)
+    }
+
+    "connected" in {
+      layer.setSessionState(clientId, connected = true)
+      assert(layer.sessionState(clientId))
+      layer.setSessionState(clientId, connected = false)
+      assert(!layer.sessionState(clientId))
     }
   }
 }
