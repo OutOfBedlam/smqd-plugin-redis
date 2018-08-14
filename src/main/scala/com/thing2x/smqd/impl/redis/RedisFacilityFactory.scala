@@ -17,7 +17,6 @@ package com.thing2x.smqd.impl.redis
 import com.thing2x.smqd.SessionStoreDelegate
 import com.thing2x.smqd.impl.DefaultFacilityFactory
 import com.typesafe.config.Config
-import redis.clients.jedis.{JedisPool, JedisPoolConfig}
 
 import scala.concurrent.ExecutionContext
 
@@ -31,15 +30,14 @@ class RedisFacilityFactory(config: Config, ec: ExecutionContext) extends Default
   private val redisHost = config.getString("smqd.redis.host")
   private val redisPort = config.getInt("smqd.redis.port")
 
-  private val poolConfig = new JedisPoolConfig()
-  private val pool = new JedisPool(poolConfig, redisHost, redisPort)
+  private val layer = new RedisLayer(redisHost, redisPort)
 
   override def sessionStoreDelegate: SessionStoreDelegate = {
     implicit val executionContext: ExecutionContext = ec
-    new RedisSessionStoreDelegate(pool)
+    new RedisSessionStoreDelegate(layer)
   }
 
   override def release(): Unit = {
-    pool.close()
+    layer.close()
   }
 }
